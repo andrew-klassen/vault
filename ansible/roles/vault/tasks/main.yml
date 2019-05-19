@@ -1,0 +1,9 @@
+
+- name: install dependencies
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - python
+    - python-mysqldb
+
