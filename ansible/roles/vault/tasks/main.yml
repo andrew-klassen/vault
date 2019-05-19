@@ -5,5 +5,65 @@
   vars:
     packages:
     - python
-    - python-mysqldb
+    - unzip
+
+- name: download vault binary
+  get_url:
+    url: https://releases.hashicorp.com/vault/1.1.2/vault_1.1.2_linux_amd64.zip
+    dest: /usr/bin/vault.zip
+
+- name: extract vault.zip
+  unarchive:
+    src: /usr/bin/vault.zip
+    dest: /usr/bin
+
+- name: Creates directory
+  file:
+    path: '{{ item }}'
+    state: directory
+  with_items:
+    - /etc/vault
+    - /vault-data
+    - /logs/vault
+
+- name: template the vault config
+  template:
+    src: source/config.json
+    dest: /etc/vault/config.json
+
+- name: add the vault service
+  template:
+    src: source/vault.service
+    dest: /etc/systemd/system/vault.service
+
+- name: start and enable vault service
+  service:
+    name: vault
+    state: started
+    enabled: yes
+
+- name: set environment varible
+  shell: "echo $MY_ENV_VARIABLE"
+  environment:
+    VAULT_ADDR: http://{{ ip_address }}:8200
+
+- name: add environment varible to /root/.bashrc
+  lineinfile:
+    path: /root/.bashrc
+    regexp: '^export VAULT_ADDR'
+    line: 'export VAULT_ADDR=http://{{ ip_address }}:8200'
+
+- name: add environment varible to ~/.bashrc
+  lineinfile:
+    path: ~/.bashrc
+    regexp: '^export VAULT_ADDR'
+    line: 'export VAULT_ADDR=http://{{ ip_address }}:8200'    
+
+- name: initialize vault
+  shell: |
+    #!/bin/bash
+
+    if [ ! -f /etc/vault/init.file ]; then
+      vault operator init > /etc/vault/init.file
+    fi
 
