@@ -42,11 +42,6 @@
     state: started
     enabled: yes
 
-- name: set environment varible
-  shell: "echo $MY_ENV_VARIABLE"
-  environment:
-    VAULT_ADDR: http://{{ ip_address }}:8200
-
 - name: add environment varible to /root/.bashrc
   lineinfile:
     path: /root/.bashrc
@@ -63,7 +58,13 @@
   shell: |
     #!/bin/bash
 
+    export VAULT_ADDR=http://{{ ip_address }}:8200
+
     if [ ! -f /etc/vault/init.file ]; then
-      vault operator init > /etc/vault/init.file
+         vault operator init > /etc/vault/init.file
+    fi
+
+    if [ $(grep "^Initial Root Token:" /etc/vault/init.file | wc -l) -eq 0 ]; then
+         vault operator init > /etc/vault/init.file
     fi
 
